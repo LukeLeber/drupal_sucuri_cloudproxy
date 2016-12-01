@@ -68,7 +68,7 @@ function sucuri_cloudproxy_clear_cache_submit() {
   $handle = curl_init();
   if ($handle === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
-    $internal_message = 'cURL failed to initialize on line ' . __LINE__ . ' in ' . __FILE__ . ': ' .  curl_error($handle);
+    $internal_message = 'cURL failed to initialize on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle);
     watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
     return;
   }
@@ -88,7 +88,7 @@ function sucuri_cloudproxy_clear_cache_submit() {
     CURLOPT_RETURNTRANSFER => TRUE,
   )) === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
-    $internal_message = 'cURL failed to set options on line ' . __LINE__ . ' in ' . __FILE__ . ': ' .  curl_error($handle);
+    $internal_message = 'cURL failed to set options on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle);
     watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
     return;
   }
@@ -96,7 +96,7 @@ function sucuri_cloudproxy_clear_cache_submit() {
   $response = curl_exec($handle);
   if ($response === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
-    $internal_message = 'cURL failed to execute on line ' . __LINE__ . ' in ' . __FILE__ . ': ' .  curl_error($handle);
+    $internal_message = 'cURL failed to execute on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle);
     watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
     return;
   }
@@ -112,20 +112,22 @@ function sucuri_cloudproxy_clear_cache_submit() {
 }
 
 /**
- * Modifies the <em>system_performance_Settings</em> form by adding a new fieldset.
+ * Modifies the system_performance_settings form by adding a new fieldset.
  */
 function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'system_performance_settings') {
-    $form = array('sucuri_cloudproxy_clear_cache' => array(
-      '#type' => 'fieldset',
-      '#title' => t('Cloud Proxy CDN'),
-      '#description' => t('Please note that it may take several minutes for your CDN to flush globally.'),
-      'clear' => array(
-        '#type' => 'submit',
-        '#value' => t('Flush Cloud Proxy CDN'),
-        '#submit' => array('sucuri_cloudproxy_clear_cache_submit'),
+    $form = array(
+      'sucuri_cloudproxy_clear_cache' => array(
+        '#type' => 'fieldset',
+        '#title' => t('Cloud Proxy CDN'),
+        '#description' => t('Please note that it may take several minutes for your CDN to flush globally.'),
+        'clear' => array(
+          '#type' => 'submit',
+          '#value' => t('Flush Cloud Proxy CDN'),
+          '#submit' => array('sucuri_cloudproxy_clear_cache_submit'),
+        ),
       ),
-    ),) + $form;
+    ) + $form;
   }
 }
 
