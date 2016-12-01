@@ -46,10 +46,11 @@ function sucuri_cloudproxy_form($form, &$form_state) {
  */
 function sucuri_cloudproxy_form_validate($form, &$form_state) {
   foreach (array(
-    'sucuri_cloudproxy_site_key'   => 'site key', 
-    'sucuri_cloudproxy_secret_key' => 'secret key') as $k => $v) {
+    'sucuri_cloudproxy_site_key'   => 'site key',
+    'sucuri_cloudproxy_secret_key' => 'secret key'
+  ) as $k => $v) {
 
-    if(!preg_match('/^[a-fA-F0-9]{32}$/', $form_state['values'][$k])) {
+    if (!preg_match('/^[a-fA-F0-9]{32}$/', $form_state['values'][$k])) {
       form_set_error($k, t('Your @field should be a 32 character long hexadecimal string.', array('@field' => $v)));
     }
   }
@@ -64,10 +65,10 @@ function sucuri_cloudproxy_clear_cache_submit() {
     return;
   }
 
-  $handle = curl_init();    
+  $handle = curl_init();
   if ($handle === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
-    watchdog('sucuri_cloudproxy', t('cURL failed to initialize on line @line in @file: @error', array('@line' => __LINE__, '@file' => __FILE__, '@error' => curl_error($handle))), WATCHDOG_ERROR);
+    watchdog('sucuri_cloudproxy', 'cURL failed to initialize on line ' . __LINE__ . ' in ' . __FILE__ . ': ' .  curl_error($handle), WATCHDOG_ERROR);
     return;
   }
 
@@ -86,14 +87,14 @@ function sucuri_cloudproxy_clear_cache_submit() {
     CURLOPT_RETURNTRANSFER => TRUE,
   )) === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
-    watchdog('sucuri_cloudproxy', t('cURL failed to set options on line @line in @file: @error', array('@line' => __LINE__, '@file' => __FILE__, '@error' => curl_error($handle))), WATCHDOG_ERROR);
+    watchdog('sucuri_cloudproxy', 'cURL failed to set options on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle), WATCHDOG_ERROR);
     return;
   }
 
   $response = curl_exec($handle);
   if ($response === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
-    watchdog('sucuri_cloudproxy', t('cURL failed to execute on line @line in @file: @error', array('@line' => __LINE__, '@file' => __FILE__, '@error' => curl_error($handle))), WATCHDOG_ERROR);
+    watchdog('sucuri_cloudproxy', 'cURL failed to execute on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle), WATCHDOG_ERROR);
     return;
   }
 
@@ -131,12 +132,12 @@ function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
 function sucuri_cloudproxy_menu() {
   return array(
     'admin/config/system/sucuri_cloudproxy' => array(
-      'title'            => t('Sucuri Cloud Proxy'),
-      'description'      => t('Magage Sucuri Cloud Proxy settings.'),
+      'title'            => 'Sucuri Cloud Proxy',
+      'description'      => 'Magage Sucuri Cloud Proxy settings.',
       'page callback'    => 'drupal_get_form',
       'page arguments'   => array('sucuri_cloudproxy_form'),
       'access arguments' => array('administer site configuration'),
       'type'             => MENU_NORMAL_ITEM,
-    )
+    ),
   );
 }
