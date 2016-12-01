@@ -1,9 +1,15 @@
 <?php
 
 /**
+ * @file
+ * Adds the functionality required to remotely administer the Sucuri CloudProxy WAF.
+ */
+
+/**
  * Help function for the sucuri_cloudproxy module.
  *
- * @param $path string the path that is being visited for help
+ * @param $path string 
+ *   The path that is being visited for help
  * @param $arg
  */
 function sucuri_cloudproxy_help($path, $arg) {
@@ -15,8 +21,10 @@ function sucuri_cloudproxy_help($path, $arg) {
 /**
  * Adds various fields to the <em>sucuri_cloudproxy_form</em> form.
  *
- * @param $form array the form that is being added to
- * @param &$form_state array the state of the form that is being added to
+ * @param $form array
+ *   The form that is being added to.
+ * @param &$form_state array
+ *   The state of the form that is being added to.
  */
 function sucuri_cloudproxy_form($form, &$form_state) {
   $form['sucuri_cloudproxy_site_key'] = array(
@@ -26,9 +34,9 @@ function sucuri_cloudproxy_form($form, &$form_state) {
     '#size'          => 32,
     '#maxlength'     => 32,
     '#description'   => t('The site key issued by Sucuri for this domain.'),
-    '#required'      => TRUE,        
+    '#required'      => TRUE,
   );
-    
+
   $form['sucuri_cloudproxy_secret_key'] = array(
     '#type'          => 'textfield',
     '#title'         => t('Sucuri Cloud Proxy Secret Key'),
@@ -38,15 +46,17 @@ function sucuri_cloudproxy_form($form, &$form_state) {
     '#description'   => t('The secret key issued by Sucuri for this domain.'),
     '#required'      => TRUE,
   );
-    
+
   return system_settings_form($form);
 }
 
 /**
- * Performs validation on all submitted form values
+ * Performs validation on all submitted form values.
  *
- * @param $form array the form that is being validated
- * @param &$form_state array the state of the form that is being validated
+ * @param $form array
+ *   The form that is being validated
+ * @param &$form_state array
+ *   The state of the form that is being validated
  */
 function sucuri_cloudproxy_form_validate($form, &$form_state) {
   foreach (array(
@@ -60,50 +70,49 @@ function sucuri_cloudproxy_form_validate($form, &$form_state) {
 }
 
 /**
- * Invoked when a user clicks the 'Flush CDN Cache' button
+ * Invoked when a user clicks the 'Flush CDN Cache' button.
  */
 function sucuri_cloudproxy_clear_cache_submit() {
-
   if (!function_exists('curl_version')) {
     drupal_set_message(t('Sorry, but cURL must be installed and enabled in order to utilize this functionality.'), 'error');
     return;
   }
-    
+
   $handle = curl_init();    
-  if ($handle === false) {
+  if ($handle === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
     watchdog('sucuri_cloudproxy', t('cURL failed to initialize on line @line in @file: @error', array('@line' => __LINE__, '@file' => __FILE__, '@error' => curl_error($handle))), WATCHDOG_ERROR);
     return;
   }
-    
+
   $query = http_build_query(array(
     'k' => variable_get('sucuri_cloudproxy_site_key'),
     's' => variable_get('sucuri_cloudproxy_secret_key'),
-    'a' => 'clear_cache'
+    'a' => 'clear_cache',
   ));
-        
+
   if (curl_setopt_array($handle, array(
     CURLOPT_URL            => 'https://waf.sucuri.net/api?v2',
     CURLOPT_POST           => 3,
     CURLOPT_POSTFIELDS     => $query,
-    CURLOPT_HEADER         => false,
+    CURLOPT_HEADER         => FALSE,
     CURLOPT_PORT           => 443,
-    CURLOPT_RETURNTRANSFER => true
-  )) === false) {
+    CURLOPT_RETURNTRANSFER => TRUE,
+  )) === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
     watchdog('sucuri_cloudproxy', t('cURL failed to set options on line @line in @file: @error', array('@line' => __LINE__, '@file' => __FILE__, '@error' => curl_error($handle))), WATCHDOG_ERROR);
     return;
   }
-    
+
   $response = curl_exec($handle);
-  if ($response === false) {
+  if ($response === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
     watchdog('sucuri_cloudproxy', t('cURL failed to execute on line @line in @file: @error', array('@line' => __LINE__, '@file' => __FILE__, '@error' => curl_error($handle))), WATCHDOG_ERROR);
     return;
   }
 
   $result = json_decode($response, TRUE);
-    
+
   if (!$result['status']) {
     $messages = implode('/', $result['messages']);
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache: @messages', array('@messages' => $messages)), 'error');
@@ -115,12 +124,15 @@ function sucuri_cloudproxy_clear_cache_submit() {
 /**
  * Modifies the <em>system_performance_Settings</em> form by adding a new fieldset.
  *
- * @param &$form array the form that may be altered
- * @param &$form_state array the state of the form
- * @param $form_id string the id of the form
+ * @param &$form array
+ *   The form that may be altered
+ * @param &$form_state array
+ *   The state of the form
+ * @param $form_id string
+ *   The id of the form
  */
 function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'system_performance_settings') {        
+  if ($form_id == 'system_performance_settings') {
     $form = array('sucuri_cloudproxy_clear_cache' => array(
       '#type' => 'fieldset',
       '#title' => t('Cloud Proxy CDN'),
@@ -128,14 +140,14 @@ function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
       'clear' => array(
         '#type' => 'submit',
         '#value' => t('Flush Cloud Proxy CDN'),
-        '#submit' => array('sucuri_cloudproxy_clear_cache_submit')
-      )
+        '#submit' => array('sucuri_cloudproxy_clear_cache_submit'),
+      ),
     )) + $form;
   }
 }
 
 /**
- * Adds a new configuration menu to the system configuration page
+ * Adds a new configuration menu to the system configuration page.
  *
  * @return array
  */
@@ -147,7 +159,7 @@ function sucuri_cloudproxy_menu() {
       'page callback'    => 'drupal_get_form',
       'page arguments'   => array('sucuri_cloudproxy_form'),
       'access arguments' => array('administer site configuration'),
-      'type'             => MENU_NORMAL_ITEM
+      'type'             => MENU_NORMAL_ITEM,
     )
   );
 }
