@@ -1,0 +1,5 @@
+name = Sucuri Cloudproxy
+description = Sucuri Cloudproxy WAF Integration Module
+core = 7.x
+
+configure = admin/config/system/sucuri_cloudproxy
