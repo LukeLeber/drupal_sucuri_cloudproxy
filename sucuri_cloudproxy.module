@@ -2,15 +2,11 @@
 
 /**
  * @file
- * Adds the functionality required to remotely administer the Sucuri CloudProxy WAF.
+ * Adds functionality to remotely administer the Sucuri CloudProxy WAF.
  */
 
 /**
  * Help function for the sucuri_cloudproxy module.
- *
- * @param $path string 
- *   The path that is being visited for help
- * @param $arg
  */
 function sucuri_cloudproxy_help($path, $arg) {
   if ($path == 'admin/help#sucuri_cloudproxy') {
@@ -20,11 +16,6 @@ function sucuri_cloudproxy_help($path, $arg) {
 
 /**
  * Adds various fields to the <em>sucuri_cloudproxy_form</em> form.
- *
- * @param $form array
- *   The form that is being added to.
- * @param &$form_state array
- *   The state of the form that is being added to.
  */
 function sucuri_cloudproxy_form($form, &$form_state) {
   $form['sucuri_cloudproxy_site_key'] = array(
@@ -52,11 +43,6 @@ function sucuri_cloudproxy_form($form, &$form_state) {
 
 /**
  * Performs validation on all submitted form values.
- *
- * @param $form array
- *   The form that is being validated
- * @param &$form_state array
- *   The state of the form that is being validated
  */
 function sucuri_cloudproxy_form_validate($form, &$form_state) {
   foreach (array(
@@ -123,13 +109,6 @@ function sucuri_cloudproxy_clear_cache_submit() {
 
 /**
  * Modifies the <em>system_performance_Settings</em> form by adding a new fieldset.
- *
- * @param &$form array
- *   The form that may be altered
- * @param &$form_state array
- *   The state of the form
- * @param $form_id string
- *   The id of the form
  */
 function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'system_performance_settings') {
@@ -148,8 +127,6 @@ function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
 
 /**
  * Adds a new configuration menu to the system configuration page.
- *
- * @return array
  */
 function sucuri_cloudproxy_menu() {
   return array(
