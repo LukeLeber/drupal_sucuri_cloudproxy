@@ -47,7 +47,7 @@ function sucuri_cloudproxy_form($form, &$form_state) {
 function sucuri_cloudproxy_form_validate($form, &$form_state) {
   foreach (array(
     'sucuri_cloudproxy_site_key'   => 'site key',
-    'sucuri_cloudproxy_secret_key' => 'secret key'
+    'sucuri_cloudproxy_secret_key' => 'secret key',
   ) as $k => $v) {
 
     if (!preg_match('/^[a-fA-F0-9]{32}$/', $form_state['values'][$k])) {
@@ -68,7 +68,8 @@ function sucuri_cloudproxy_clear_cache_submit() {
   $handle = curl_init();
   if ($handle === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
-    watchdog('sucuri_cloudproxy', 'cURL failed to initialize on line ' . __LINE__ . ' in ' . __FILE__ . ': ' .  curl_error($handle), WATCHDOG_ERROR);
+    $internal_message = 'cURL failed to initialize on line ' . __LINE__ . ' in ' . __FILE__ . ': ' .  curl_error($handle);
+    watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
     return;
   }
 
@@ -87,14 +88,16 @@ function sucuri_cloudproxy_clear_cache_submit() {
     CURLOPT_RETURNTRANSFER => TRUE,
   )) === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
-    watchdog('sucuri_cloudproxy', 'cURL failed to set options on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle), WATCHDOG_ERROR);
+    $internal_message = 'cURL failed to set options on line ' . __LINE__ . ' in ' . __FILE__ . ': ' .  curl_error($handle);
+    watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
     return;
   }
 
   $response = curl_exec($handle);
   if ($response === FALSE) {
     drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
-    watchdog('sucuri_cloudproxy', 'cURL failed to execute on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle), WATCHDOG_ERROR);
+    $internal_message = 'cURL failed to execute on line ' . __LINE__ . ' in ' . __FILE__ . ': ' .  curl_error($handle);
+    watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
     return;
   }
 
@@ -122,7 +125,7 @@ function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
         '#value' => t('Flush Cloud Proxy CDN'),
         '#submit' => array('sucuri_cloudproxy_clear_cache_submit'),
       ),
-    )) + $form;
+    ),) + $form;
   }
 }
 
