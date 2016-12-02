@@ -1,5 +1,9 @@
 name = Sucuri Cloudproxy
 description = Sucuri Cloudproxy WAF Integration Module
 core = 7.x
-
+package = Administration
+php 5.3
 configure = admin/config/system/sucuri_cloudproxy
+
+files[] = tests/sucuri_cloudproxy.testsuite
+files[] = tests/sucuri_cloudproxy_set_configuration.test
