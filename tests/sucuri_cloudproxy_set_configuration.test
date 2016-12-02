@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://drupal.local/" />
+<title>Set Configuration</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Set Configuration</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=toolbar-link-admin-config</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertElementPresent</td>
+	<td>link=Sucuri Cloud Proxy</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertText</td>
+	<td>link=Sucuri Cloud Proxy</td>
+	<td>Sucuri Cloud Proxy</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Sucuri Cloud Proxy</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertElementPresent</td>
+	<td>id=edit-sucuri-cloudproxy-site-key</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertElementPresent</td>
+	<td>id=edit-sucuri-cloudproxy-secret-key</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-sucuri-cloudproxy-site-key</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-sucuri-cloudproxy-secret-key</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertText</td>
+	<td>css=div.messages.error &gt; ul &gt; li</td>
+	<td>Sucuri Cloud Proxy Site Key field is required.</td>
+</tr>
+<tr>
+	<td>assertText</td>
+	<td>//div[@id='console']/div/ul/li[2]</td>
+	<td>Sucuri Cloud Proxy Secret Key field is required.</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-sucuri-cloudproxy-site-key</td>
+	<td>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaZ</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-sucuri-cloudproxy-secret-key</td>
+	<td>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaZ</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertText</td>
+	<td>css=div.messages.error &gt; ul &gt; li</td>
+	<td>Your site key should be a 32 character long hexadecimal string.</td>
+</tr>
+<tr>
+	<td>assertText</td>
+	<td>//div[@id='console']/div/ul/li[2]</td>
+	<td>Your secret key should be a 32 character long hexadecimal string.</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-sucuri-cloudproxy-site-key</td>
+	<td>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa4</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-sucuri-cloudproxy-secret-key</td>
+	<td>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa4</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertText</td>
+	<td>css=div.messages.status</td>
+	<td>Status message The configuration options have been saved.</td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
