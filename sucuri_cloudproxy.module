@@ -10,7 +10,7 @@
  */
 function sucuri_cloudproxy_help($path, $arg) {
   if ($path == 'admin/help#sucuri_cloudproxy') {
-    return t('Manage your CloudProxy CDN cache!');
+    return t('Manage your CloudProxy cache!');
   }
 }
 
@@ -57,7 +57,7 @@ function sucuri_cloudproxy_form_validate($form, &$form_state) {
 }
 
 /**
- * Invoked when a user clicks the 'Flush CDN Cache' button.
+ * Invoked when a user clicks the 'Flush Cache' button.
  */
 function sucuri_cloudproxy_clear_cache_submit() {
   if (!function_exists('curl_version')) {
@@ -67,7 +67,7 @@ function sucuri_cloudproxy_clear_cache_submit() {
 
   $handle = curl_init();
   if ($handle === FALSE) {
-    drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
+    drupal_set_message(t('Sorry, but something went wrong while flushing your cache.'), 'error');
     $internal_message = 'cURL failed to initialize on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle);
     watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
     return;
@@ -87,7 +87,7 @@ function sucuri_cloudproxy_clear_cache_submit() {
     CURLOPT_PORT           => 443,
     CURLOPT_RETURNTRANSFER => TRUE,
   )) === FALSE) {
-    drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
+    drupal_set_message(t('Sorry, but something went wrong while flushing your cache.'), 'error');
     $internal_message = 'cURL failed to set options on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle);
     watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
     return;
@@ -95,7 +95,7 @@ function sucuri_cloudproxy_clear_cache_submit() {
 
   $response = curl_exec($handle);
   if ($response === FALSE) {
-    drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache.'), 'error');
+    drupal_set_message(t('Sorry, but something went wrong while flushing your cache.'), 'error');
     $internal_message = 'cURL failed to execute on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle);
     watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
     return;
@@ -105,10 +105,10 @@ function sucuri_cloudproxy_clear_cache_submit() {
 
   if (!$result['status']) {
     $messages = implode('/', $result['messages']);
-    drupal_set_message(t('Sorry, but something went wrong while flushing your CDN cache: @messages', array('@messages' => $messages)), 'error');
+    drupal_set_message(t('Sorry, but something went wrong while flushing your cache: @messages', array('@messages' => $messages)), 'error');
     return;
   }
-  drupal_set_message(t('Your CDN cache has began to flush.  Please note that it may take several minutes to propagate worldwide.'));
+  drupal_set_message(t('Your cache has began to flush.  Please note that it may take several minutes to propagate worldwide.'));
 }
 
 /**
@@ -119,11 +119,11 @@ function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
     $form = array(
       'sucuri_cloudproxy_clear_cache' => array(
         '#type' => 'fieldset',
-        '#title' => t('Cloud Proxy CDN'),
-        '#description' => t('Please note that it may take several minutes for your CDN to flush globally.'),
+        '#title' => t('Cloud Proxy'),
+        '#description' => t('Please note that it may take several minutes for your Cloud Proxy cache to flush globally.'),
         'clear' => array(
           '#type' => 'submit',
-          '#value' => t('Flush Cloud Proxy CDN'),
+          '#value' => t('Flush Cloud Proxy'),
           '#submit' => array('sucuri_cloudproxy_clear_cache_submit'),
         ),
       ),
