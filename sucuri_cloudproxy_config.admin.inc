@@ -35,7 +35,7 @@ function sucuri_cloudproxy_config_form($form, &$form_state) {
     '#collapsed'   => FALSE,
   );
 
-  if(!module_exists(FORM_ENCRYPTION_MODULE)) {
+  if(module_exists(FORM_ENCRYPTION_MODULE)) {
     $site_key['#encrypt'] = TRUE;
     $secret_key['#encrypt'] = TRUE;
   }
