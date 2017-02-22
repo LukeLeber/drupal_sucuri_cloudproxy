@@ -6,143 +6,147 @@
  */
 
 /**
- * Help function for the sucuri_cloudproxy module.
+ * Implements hook_help();
  */
 function sucuri_cloudproxy_help($path, $arg) {
   if ($path == 'admin/help#sucuri_cloudproxy') {
-    return t('Manage your CloudProxy cache!');
+    return t('Manage your CloudProxy cache & more!');
   }
 }
 
 /**
- * Adds various fields to the <em>sucuri_cloudproxy_form</em> form.
+ * Implements hook_menu();
  */
-function sucuri_cloudproxy_form($form, &$form_state) {
-  $form['sucuri_cloudproxy_site_key'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Sucuri Cloud Proxy Site Key'),
-    '#default_value' => variable_get('sucuri_cloudproxy_site_key'),
-    '#size'          => 32,
-    '#maxlength'     => 32,
-    '#description'   => t('The site key issued by Sucuri for this domain.'),
-    '#required'      => TRUE,
+function sucuri_cloudproxy_menu() {
+  
+  $items = array();
+  
+  /// api keys configuration
+  $items['admin/config/system/sucuri_cloudproxy'] = array(
+    'title'            => 'Sucuri Cloud Proxy',
+    'description'      => 'Magage Sucuri Cloud Proxy settings.',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('sucuri_cloudproxy_config_form'),
+    'access arguments' => array('administer site configuration'),
+    'type'             => MENU_NORMAL_ITEM,
+    'file'             => 'sucuri_cloudproxy_config.admin.inc',
   );
 
-  $form['sucuri_cloudproxy_secret_key'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Sucuri Cloud Proxy Secret Key'),
-    '#default_value' => variable_get('sucuri_cloudproxy_secret_key'),
-    '#size'          => 32,
-    '#maxlength'     => 32,
-    '#description'   => t('The secret key issued by Sucuri for this domain.'),
-    '#required'      => TRUE,
+  /// ip filtering
+  $items['admin/config/people/sucuri_cloudproxy_ip_filter'] = array(
+    'title'            => 'Cloud Proxy IP filtering',
+    'description'      => 'Manage blocked IP addresses at the Cloud Proxy firewall.',
+    'page callback'    => 'sucuri_cloudproxy_ip_filter_whitelist',
+    'access arguments' => array('administer site configuration'),
+    'type'             => MENU_NORMAL_ITEM,
+   'file'             => 'sucuri_cloudproxy_ip.admin.inc'
   );
-
-  return system_settings_form($form);
+  
+  /// whitelist management
+  $items['admin/config/people/sucuri_cloudproxy_ip_filter/whitelist'] = array(
+    'title' => 'IP Whitelist',
+    'description'      => 'Manage allowed IP addresses at the Cloud Proxy firewall.',
+    'access arguments' => array('administer site configuration'),
+    'type'  => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'sucuri_cloudproxy_ip.admin.inc',
+    'weight' => -1,
+  );
+  
+  /// accessibility fallback for deleting whitelist entries
+  $items['admin/config/people/sucuri_cloudproxy_ip_filter/whitelist/delete/nojs/%'] = array(
+    'page callback'   => 'sucuri_cloudproxy_ip_filter_whitelist_delete',
+    'page arguments'  => array(6, 7),
+    'access arguments' => array('administer site configuration'),
+    'type'            => MENU_CALLBACK,
+    'file'            => 'sucuri_cloudproxy_ip.admin.inc'
+  );
+  
+  /// ajax mechanism for deleting whitelist entries
+  $items['admin/config/people/sucuri_cloudproxy_ip_filter/whitelist/delete/ajax/%'] = array(
+    'delivery callback' => 'ajax_deliver',
+  ) + $items['admin/config/people/sucuri_cloudproxy_ip_filter/whitelist/delete/nojs/%'];
+  
+  /// blacklist management
+  $items['admin/config/people/sucuri_cloudproxy_ip_filter/blacklist'] = array(
+    'title' => 'IP Blacklist',
+    'description'      => 'Manage blocked IP addresses at the Cloud Proxy firewall.',
+    'page callback'    => 'sucuri_cloudproxy_ip_filter_blacklist',
+    'access arguments' => array('administer site configuration'),
+    'type'  => MENU_LOCAL_TASK,
+    'file' => 'sucuri_cloudproxy_ip.admin.inc',
+  );
+  
+  /// accessibility fallback for deleting blacklist entries
+  $items['admin/config/people/sucuri_cloudproxy_ip_filter/blacklist/delete/nojs/%'] = array(
+    'page callback'   => 'sucuri_cloudproxy_ip_filter_blacklist_delete',
+    'page arguments'  => array(6, 7),
+    'access arguments' => array('administer site configuration'),
+    'type'            => MENU_CALLBACK,
+    'file'            => 'sucuri_cloudproxy_ip.admin.inc'
+  );
+  
+  /// ajax mechanism for deleting blacklist entries
+  $items['admin/config/people/sucuri_cloudproxy_ip_filter/blacklist/delete/ajax/%'] = array(
+    'delivery callback' => 'ajax_deliver',
+  ) + $items['admin/config/people/sucuri_cloudproxy_ip_filter/blacklist/delete/nojs/%'];
+  
+  
+  
+  
+  $items['admin/config/people/sucuri_cloudproxy_ip_filter/add/nojs/%'] = array(
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'sucuri_cloudproxy_ip.admin.inc'
+  );
+  
+  $items['admin/config/people/sucuri_cloudproxy_ip_filter/add/ajax/%'] = array(
+      'delivery callback' => 'ajax_deliver',
+  ) + $items['admin/config/people/sucuri_cloudproxy_ip_filter/add/nojs/%'];
+  
+  return $items;
 }
 
 /**
- * Performs validation on all submitted form values.
+ * Implements hook_form_alter();
  */
-function sucuri_cloudproxy_form_validate($form, &$form_state) {
-  foreach (array(
-    'sucuri_cloudproxy_site_key'   => 'site key',
-    'sucuri_cloudproxy_secret_key' => 'secret key',
-  ) as $k => $v) {
-
-    if (!preg_match('/^[a-fA-F0-9]{32}$/', $form_state['values'][$k])) {
-      form_set_error($k, t('Your @field should be a 32 character long hexadecimal string.', array('@field' => $v)));
-    }
+function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'system_performance_settings') {
+      $form = array('sucuri_cloudproxy_cache_clear' => array(
+      '#type' => 'fieldset',
+      '#title' => t('Cloud Proxy'),
+      '#description' => t('Please note that it may take several minutes for your Cloud Proxy cache to flush globally.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      'file' => array(
+        '#type' => 'textfield',
+        '#title' => t('Purge specific file'),
+        '#description' => t('If left blank, all files will be purged.'),
+      ),
+      'clear' => array(
+        '#type' => 'submit',
+        '#value' => t('Flush Cache'),
+        '#submit' => array('sucuri_cloudproxy_clear_cache_submit'),
+      ),
+    )) + $form;
   }
 }
 
 /**
  * Invoked when a user clicks the 'Flush Cache' button.
  */
-function sucuri_cloudproxy_clear_cache_submit() {
-  if (!function_exists('curl_version')) {
-    drupal_set_message(t('Sorry, but cURL must be installed and enabled in order to utilize this functionality.'), 'error');
+function sucuri_cloudproxy_clear_cache_submit($form, &$form_state) {
+    
+  if(!variable_get('sucuri_cloudproxy_site_key') || !variable_get('sucuri_cloudproxy_secret_key')) {
+    drupal_set_message(t('A valid set of API keys must be configured prior to using this feature.'), 'warning');
+    drupal_goto('admin/config/system/sucuri_cloudproxy');
     return;
   }
 
-  $handle = curl_init();
-  if ($handle === FALSE) {
-    drupal_set_message(t('Sorry, but something went wrong while flushing your cache.'), 'error');
-    $internal_message = 'cURL failed to initialize on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle);
-    watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
-    return;
-  }
-
-  $query = http_build_query(array(
-    'k' => variable_get('sucuri_cloudproxy_site_key'),
-    's' => variable_get('sucuri_cloudproxy_secret_key'),
-    'a' => 'clear_cache',
-  ));
-
-  if (curl_setopt_array($handle, array(
-    CURLOPT_URL            => 'https://waf.sucuri.net/api?v2',
-    CURLOPT_POST           => 3,
-    CURLOPT_POSTFIELDS     => $query,
-    CURLOPT_HEADER         => FALSE,
-    CURLOPT_PORT           => 443,
-    CURLOPT_RETURNTRANSFER => TRUE,
-  )) === FALSE) {
-    drupal_set_message(t('Sorry, but something went wrong while flushing your cache.'), 'error');
-    $internal_message = 'cURL failed to set options on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle);
-    watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
-    return;
-  }
-
-  $response = curl_exec($handle);
-  if ($response === FALSE) {
-    drupal_set_message(t('Sorry, but something went wrong while flushing your cache.'), 'error');
-    $internal_message = 'cURL failed to execute on line ' . __LINE__ . ' in ' . __FILE__ . ': ' . curl_error($handle);
-    watchdog('sucuri_cloudproxy', $internal_message, WATCHDOG_ERROR);
-    return;
-  }
-
-  $result = json_decode($response, TRUE);
-
-  if (!$result['status']) {
-    $messages = implode('/', $result['messages']);
-    drupal_set_message(t('Sorry, but something went wrong while flushing your cache: @messages', array('@messages' => $messages)), 'error');
-    return;
-  }
-  drupal_set_message(t('Your cache has began to flush.  Please note that it may take several minutes to propagate worldwide.'));
-}
-
-/**
- * Modifies the system_performance_settings form by adding a new fieldset.
- */
-function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'system_performance_settings') {
-    $form = array(
-      'sucuri_cloudproxy_clear_cache' => array(
-        '#type' => 'fieldset',
-        '#title' => t('Cloud Proxy'),
-        '#description' => t('Please note that it may take several minutes for your Cloud Proxy cache to flush globally.'),
-        'clear' => array(
-          '#type' => 'submit',
-          '#value' => t('Flush Cloud Proxy'),
-          '#submit' => array('sucuri_cloudproxy_clear_cache_submit'),
-        ),
-      ),
-    ) + $form;
-  }
-}
-
-/**
- * Adds a new configuration menu to the system configuration page.
- */
-function sucuri_cloudproxy_menu() {
-  return array(
-    'admin/config/system/sucuri_cloudproxy' => array(
-      'title'            => 'Sucuri Cloud Proxy',
-      'description'      => 'Magage Sucuri Cloud Proxy settings.',
-      'page callback'    => 'drupal_get_form',
-      'page arguments'   => array('sucuri_cloudproxy_form'),
-      'access arguments' => array('administer site configuration'),
-      'type'             => MENU_NORMAL_ITEM,
-    ),
-  );
+  module_load_include('inc', 'sucuri_cloudproxy', 'sucuri_cloudproxy_api.admin');
+  
+  /// No validation required - all input is urlencoded and passed to Sucuri
+  $file = isset($form_state['values']['file']) ? 
+          $form_state['values']['file'] : null;
+  
+  sucuri_cloudproxy_api_clear_cache($file);
 }
