@@ -90,9 +90,6 @@ function sucuri_cloudproxy_menu() {
     'delivery callback' => 'ajax_deliver',
   ) + $items['admin/config/people/sucuri_cloudproxy_ip_filter/blacklist/delete/nojs/%'];
   
-  
-  
-  
   $items['admin/config/people/sucuri_cloudproxy_ip_filter/add/nojs/%'] = array(
     'access arguments' => array('administer site configuration'),
     'type' => MENU_CALLBACK,

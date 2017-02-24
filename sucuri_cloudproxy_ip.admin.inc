@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Provides remote whitelist/blacklist maintenance capabilities
+ */
+
 /** @var string A regular expression that matches IPV4 addresses and CIDR ranges */
 const REGEX_MATCH_IPV4_WITH_CIDR = '/^(?=\d+\.\d+\.\d+\.\d+($|\/))(([1-9]?\d|1\d\d|2[0-4]\d|25[0-5])\.?){4}(\/([0-9]|[1-2][0-9]|3[0-2]))?$/';
 
@@ -98,7 +103,9 @@ function _sucuri_cloudproxy_ip_filter_list($caption, $rows, $empty_text) {
       'header'     => array('IP Address', 'Operations'),
       'rows'       => $rows, 
       'caption'    => $caption,
-      'attributes' => array(),
+      'attributes' => array(
+        'id' => 'ip_address_table',
+      ),
       'sticky'     => FALSE,
       'colgroups'  => array(),
       'empty'      => $empty_text,
@@ -125,10 +132,42 @@ function sucuri_cloudproxy_ip_filter_add_form_validate($form, &$form_state) {
  * Implements hook_form_callback();
  */
 function sucuri_cloudproxy_ip_filter_add_form_callback($form, &$form_state) {
+  $commands = array();
   if(form_get_errors()) {
     $form_state['rebuild'] = TRUE;
   }
-  return $form;
+  
+  $type = $form_state['values']['type'];
+  
+  $commands[] = ajax_command_remove('div.messages');
+  $commands[] = ajax_command_before('.region-content', theme('status_messages'));
+  $commands[] = ajax_command_replace(NULL, render($form));
+  
+  $replacement = NULL;
+  switch($type) {
+    case 'whitelist':
+      $replacement = _sucuri_cloudproxy_ip_filter_list(
+        t('Whitelisted IP Addresses'),
+        _fetch_ips('whitelist'),
+        t('There are no IP addresses whitelisted at this time.')
+      );
+      break;
+    case 'blacklist':
+      $replacement = _sucuri_cloudproxy_ip_filter_list(
+        t('Blacklisted IP Addresses'),
+        _fetch_ips('blacklist'),
+        t('There are no IP addresses blacklisted at this time.')
+      );
+      break;
+  }
+  if($replacement) {
+    $commands[] = ajax_command_replace('#ip_address_table', $replacement);
+  }
+  
+  return array(
+    '#type' => 'ajax', 
+    '#commands' => $commands
+  );
 }
 
 /**
@@ -140,18 +179,21 @@ function sucuri_cloudproxy_ip_filter_add_form_submit($form, &$form_state) {
   module_load_include('inc', 'sucuri_cloudproxy', 'sucuri_cloudproxy_api.admin');
   
   $my_ip = (bool)$form_state['values']['my_ip'];
+  $type = $form_state['values']['type'];
   
-  switch($form_state['values']['type']) {
+  $result = FALSE;
+  
+  switch($type) {
     case 'whitelist':
-      sucuri_cloudproxy_api_whitelist_ip($my_ip ? NULL : $form_state['values']['ip']);     
+      $result = (bool)sucuri_cloudproxy_api_whitelist_ip($my_ip ? NULL : $form_state['values']['ip']);     
       break;
     case 'blacklist':
-      sucuri_cloudproxy_api_blacklist_ip($form_state['values']['ip']);
+      $result = (bool)sucuri_cloudproxy_api_blacklist_ip($form_state['values']['ip']);
       break;
     default:
       drupal_set_message(t('Unknown list type @list', array('@list' => $form_state['values']['type'])), 'error');
-      break;
   }
+  $form_state['values']['success'] = $result;
 }
 
 /**
@@ -229,10 +271,12 @@ function sucuri_cloudproxy_ip_filter_whitelist() {
     _fetch_ips('whitelist'),
     t('There are no IP addresses whitelisted at this time.')
   );
+  
   /// required for ajax enabled delete links
   drupal_add_library('system', 'jquery.form');
+  
   $form = drupal_get_form('sucuri_cloudproxy_ip_filter_add_form', 'whitelist');
-  return $whitelist . drupal_render($form);
+  return drupal_render($form) . $whitelist;
 }
 
 /**
@@ -249,9 +293,10 @@ function sucuri_cloudproxy_ip_filter_blacklist() {
   
   /// required for ajax enabled delete links
   drupal_add_library('system', 'jquery.form');
+  
   $form = drupal_get_form('sucuri_cloudproxy_ip_filter_add_form', 'blacklist');
   
-  return $blacklist . drupal_render($form);
+  return drupal_render($form) . $blacklist;
 }
 
 /**
@@ -277,7 +322,14 @@ function sucuri_cloudproxy_ip_filter_whitelist_delete($is_ajax, $ip) {
       ajax_command_before('.region-content', theme('status_messages')),
     );
     if($result) {
-      $commands[] = ajax_command_remove('tr.sucuri-cloudproxy-whitelist-ip-' . ip2long($ip));
+      $commands[] = ajax_command_replace(
+        '#ip_address_table', 
+        _sucuri_cloudproxy_ip_filter_list(
+          t('Whitelisted IP Addresses'),
+          _fetch_ips('whitelist'),
+          t('There are no IP addresses whitelisted at this time.')
+        )
+      );
     }
     return array(
       '#type' => 'ajax', 
@@ -311,7 +363,14 @@ function sucuri_cloudproxy_ip_filter_blacklist_delete($is_ajax, $ip) {
       ajax_command_before('.region-content', theme('status_messages')),
     );
     if($result) {
-      $commands[] = ajax_command_remove('tr.sucuri-cloudproxy-blacklist-ip-' . ip2long($ip));
+      $commands[] = ajax_command_replace(
+        '#ip_address_table', 
+        _sucuri_cloudproxy_ip_filter_list(
+          t('Blacklisted IP Addresses'),
+          _fetch_ips('blacklist'),
+          t('There are no IP addresses blacklisted at this time.')
+        )
+      );
     }
     return array(
       '#type' => 'ajax', 

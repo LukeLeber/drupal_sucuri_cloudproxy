@@ -1,24 +1,32 @@
 <?php
 
-/** @var string The name of the optional form encryption module */
-const FORM_ENCRYPTION_MODULE = 'encryptfapi';
+/**
+ * @file
+ * Provides the API key configuration form and validation routine
+ */
 
 /**
  * Implements hook_form();
  */
 function sucuri_cloudproxy_config_form($form, &$form_state) {
-
-  $site_key = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Site Key'),
-    '#default_value' => variable_get('sucuri_cloudproxy_site_key'),
-    '#size'          => 32,
-    '#maxlength'     => 32,
-    '#description'   => t('The site key issued by Sucuri for this domain.'),
-    '#required'      => TRUE,
+    
+  $form['key_configuration'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Key Configuration'),
+    '#collapsible' => TRUE,
+    '#collapsed'   => FALSE,
   );
-
-  $secret_key = array(
+  $form['key_configuration']['sucuri_cloudproxy_site_key'] = array(
+    '#type'          => 'textfield',
+      '#title'         => t('Site Key'),
+      '#default_value' => variable_get('sucuri_cloudproxy_site_key'),
+      '#size'          => 32,
+      '#maxlength'     => 32,
+      '#description'   => t('The site key issued by Sucuri for this domain.'),
+      '#required'      => TRUE,
+      '#encrypt'       => TRUE,
+  );
+  $form['key_configuration']['sucuri_cloudproxy_secret_key'] = array(
     '#type'          => 'textfield',
     '#title'         => t('Secret Key'),
     '#default_value' => variable_get('sucuri_cloudproxy_secret_key'),
@@ -26,24 +34,9 @@ function sucuri_cloudproxy_config_form($form, &$form_state) {
     '#maxlength'     => 32,
     '#description'   => t('The secret key issued by Sucuri for this domain.'),
     '#required'      => TRUE,
+    '#encrypt'       => TRUE,
   );
-  
-  $key_configuration = array(
-    '#type'        => 'fieldset',
-    '#title'       => t('Key Configuration'),
-    '#collapsible' => TRUE,
-    '#collapsed'   => FALSE,
-  );
-
-  if(module_exists(FORM_ENCRYPTION_MODULE)) {
-    $site_key['#encrypt'] = TRUE;
-    $secret_key['#encrypt'] = TRUE;
-  }
-  
-  $key_configuration['sucuri_cloudproxy_site_key'] = $site_key;
-  $key_configuration['sucuri_cloudproxy_secret_key'] = $secret_key;
-  
-  $form['key_configuration'] = $key_configuration;
+ 
   return system_settings_form($form);
 }
 
