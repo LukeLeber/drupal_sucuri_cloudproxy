@@ -5,6 +5,15 @@
  * Adds functionality to remotely administer the Sucuri CloudProxy WAF.
  */
 
+/** @var string Permission constant for API key configuration */
+const PERM_SET_API_KEYS = 'sucuri cloudproxy set api keys';
+
+/** @var string Permission constant for cache clearing */
+const PERM_CLEAR_CACHE  = 'sucuri cloudproxy clear cache';
+
+/** @var string Permission constant for ip filter management */
+const PERM_IP_FILTER    = 'sucuri cloudproxy ip filter';
+
 /**
  * Implements hook_help();
  */
@@ -12,6 +21,25 @@ function sucuri_cloudproxy_help($path, $arg) {
   if ($path == 'admin/help#sucuri_cloudproxy') {
     return t('Manage your CloudProxy cache & more!');
   }
+}
+
+/**
+* Implements hook_permission();
+*/
+function sucuri_cloudproxy_permission() {
+  return array(
+    PERM_SET_API_KEYS => array(
+      'title' => t('Configure API keys'),
+      'restrict access' => TRUE,
+    ),
+    PERM_CLEAR_CACHE => array(
+      'title' => t('Clear CDN cache'),
+    ),
+    PERM_IP_FILTER => array(
+      'title' => t('Manage IP filters'),
+      'restrict access' => TRUE,
+    ),
+  );
 }
 
 /**
@@ -27,7 +55,7 @@ function sucuri_cloudproxy_menu() {
     'description'      => 'Magage Sucuri Cloud Proxy settings.',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('sucuri_cloudproxy_config_form'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array(PERM_SET_API_KEYS),
     'type'             => MENU_NORMAL_ITEM,
     'file'             => 'sucuri_cloudproxy_config.admin.inc',
   );
@@ -37,69 +65,69 @@ function sucuri_cloudproxy_menu() {
     'title'            => 'Cloud Proxy IP filtering',
     'description'      => 'Manage blocked IP addresses at the Cloud Proxy firewall.',
     'page callback'    => 'sucuri_cloudproxy_ip_filter_whitelist',
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array(PERM_IP_FILTER),
     'type'             => MENU_NORMAL_ITEM,
-   'file'             => 'sucuri_cloudproxy_ip.admin.inc'
+    'file'             => 'sucuri_cloudproxy_ip.admin.inc'
   );
-  
+
   /// whitelist management
   $items['admin/config/people/sucuri_cloudproxy_ip_filter/whitelist'] = array(
     'title' => 'IP Whitelist',
     'description'      => 'Manage allowed IP addresses at the Cloud Proxy firewall.',
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array(PERM_IP_FILTER),
     'type'  => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'sucuri_cloudproxy_ip.admin.inc',
     'weight' => -1,
   );
-  
+
   /// accessibility fallback for deleting whitelist entries
   $items['admin/config/people/sucuri_cloudproxy_ip_filter/whitelist/delete/nojs/%'] = array(
     'page callback'   => 'sucuri_cloudproxy_ip_filter_whitelist_delete',
     'page arguments'  => array(6, 7),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array(PERM_IP_FILTER),
     'type'            => MENU_CALLBACK,
     'file'            => 'sucuri_cloudproxy_ip.admin.inc'
   );
-  
+
   /// ajax mechanism for deleting whitelist entries
   $items['admin/config/people/sucuri_cloudproxy_ip_filter/whitelist/delete/ajax/%'] = array(
     'delivery callback' => 'ajax_deliver',
   ) + $items['admin/config/people/sucuri_cloudproxy_ip_filter/whitelist/delete/nojs/%'];
-  
+
   /// blacklist management
   $items['admin/config/people/sucuri_cloudproxy_ip_filter/blacklist'] = array(
     'title' => 'IP Blacklist',
     'description'      => 'Manage blocked IP addresses at the Cloud Proxy firewall.',
     'page callback'    => 'sucuri_cloudproxy_ip_filter_blacklist',
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array(PERM_IP_FILTER),
     'type'  => MENU_LOCAL_TASK,
     'file' => 'sucuri_cloudproxy_ip.admin.inc',
   );
-  
+
   /// accessibility fallback for deleting blacklist entries
   $items['admin/config/people/sucuri_cloudproxy_ip_filter/blacklist/delete/nojs/%'] = array(
     'page callback'   => 'sucuri_cloudproxy_ip_filter_blacklist_delete',
     'page arguments'  => array(6, 7),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array(PERM_IP_FILTER),
     'type'            => MENU_CALLBACK,
     'file'            => 'sucuri_cloudproxy_ip.admin.inc'
   );
-  
+
   /// ajax mechanism for deleting blacklist entries
   $items['admin/config/people/sucuri_cloudproxy_ip_filter/blacklist/delete/ajax/%'] = array(
     'delivery callback' => 'ajax_deliver',
   ) + $items['admin/config/people/sucuri_cloudproxy_ip_filter/blacklist/delete/nojs/%'];
-  
+
   $items['admin/config/people/sucuri_cloudproxy_ip_filter/add/nojs/%'] = array(
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array(PERM_IP_FILTER),
     'type' => MENU_CALLBACK,
     'file' => 'sucuri_cloudproxy_ip.admin.inc'
   );
-  
+
   $items['admin/config/people/sucuri_cloudproxy_ip_filter/add/ajax/%'] = array(
       'delivery callback' => 'ajax_deliver',
   ) + $items['admin/config/people/sucuri_cloudproxy_ip_filter/add/nojs/%'];
-  
+
   return $items;
 }
 
@@ -132,7 +160,6 @@ function sucuri_cloudproxy_form_alter(&$form, &$form_state, $form_id) {
  * Invoked when a user clicks the 'Flush Cache' button.
  */
 function sucuri_cloudproxy_clear_cache_submit($form, &$form_state) {
-    
   if(!variable_get('sucuri_cloudproxy_site_key') || !variable_get('sucuri_cloudproxy_secret_key')) {
     drupal_set_message(t('A valid set of API keys must be configured prior to using this feature.'), 'warning');
     drupal_goto('admin/config/system/sucuri_cloudproxy');
