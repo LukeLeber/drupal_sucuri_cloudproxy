@@ -52,7 +52,7 @@ function sucuri_cloudproxy_menu() {
   /// api keys configuration
   $items['admin/config/system/sucuri_cloudproxy'] = array(
     'title'            => 'Sucuri Cloud Proxy',
-    'description'      => 'Magage Sucuri Cloud Proxy settings.',
+    'description'      => 'Manage Sucuri Cloud Proxy settings.',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('sucuri_cloudproxy_config_form'),
     'access arguments' => array(PERM_SET_API_KEYS),
